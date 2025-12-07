@@ -1,0 +1,5 @@
+{
+  "name": "Copy of VibeFrame AI",
+  "description": "A futuristic AI video generator using Gemini 3 Pro, Nano Banana Pro, and Flash TTS to create vibe-coded video content.",
+  "requestFramePermissions": []
+}
