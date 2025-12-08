@@ -1,10 +1,21 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import { ImageSize, VisualStyle } from "../types";
 
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || "TAVA_ELEVENLABS_API_KEY_SHEIT"; 
+// ------------------------------------------------------------------
+// ELEVENLABS KONFIGURĀCIJA
+// Iekopē savu "sk_..." atslēgu zemāk pēdiņās.
+// Mēs izdzēsām process.env, lai tas netraucētu pārlūkam.
+const ELEVENLABS_API_KEY = "sk_133b207a40e066459dccb49d350bcdfea3dc4856eee4b593"; // <--- IELĪMĒ SAVU ATSLĒGU ŠEIT
+
+// Šis ir balss ID (Rachel - populāra, mierīga balss). 
+// Vari vēlāk nomainīt uz citu no ElevenLabs bibliotēkas.
+const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; 
+// ------------------------------------------------------------------
 
 const SAMPLE_RATE = 24000;
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Tālāk seko tava retryOperation funkcija... (to atstāj kā ir)
 
 async function retryOperation<T>(operation: () => Promise<T>, retries: number = 3, delayMs: number = 2000): Promise<T> {
   try {
