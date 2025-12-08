@@ -19,7 +19,7 @@ class BaseAgent {
   };
 
   constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    this.ai = new GoogleGenAI({ apiKey: "AIzaSyBRbciebifR9Ie3lwQSCulN1ccEZr3gt8s" }); // <-- Iekopē savu pilno atslēgu šeit
   }
 
   protected async callGemini(systemPrompt: string, userContent: string, retryCount = 0): Promise<any> {
