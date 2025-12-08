@@ -3,7 +3,7 @@ import { ImageSize, VisualStyle } from "../types";
 
 // --- KONFIGURĀCIJA ---
 // Ieliec savu Google API atslēgu (AIza...) šeit:
-const GOOGLE_API_KEY = "AIzaSyBRbciebifR9Ie3lwQSCulN1ccEZr3gt8s"; 
+const GOOGLE_API_KEY = "AIzaSyCaj59GBI8VewfIcTgRMxvAdWMtexa-ulA"; 
 
 // --- 1. BALSS ĢENERĒŠANA (Google Cloud TTS) ---
 export const generateAudio = async (text: string): Promise<string> => {
