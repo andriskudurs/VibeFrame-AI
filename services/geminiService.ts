@@ -4,7 +4,8 @@ import { runMultiAgentPipeline } from "./multiAgentService";
 
 // Vecā translateTexts funkcija paliek nemainīga (fail-safe)
 export const translateTexts = async (texts: string[], targetLang: string): Promise<string[]> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    // Iekopē savu garo atslēgu pēdiņās
+const ai = new GoogleGenAI({ apiKey: "AIzaSyBRbciebifR9Ie3lwQSCulN1ccEZr3gt8s" });
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
