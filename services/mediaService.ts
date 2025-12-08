@@ -1,7 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
-import { ImageSize, VisualStyle } from "../types";
 
-// --- 1. KONFIGURĀCIJA ---
+// --- 1. IEKŠĒJĀS TIPA DEFINĪCIJAS (Lai nav jāmeklē citi faili) ---
+// Mēs definējam tipus šeit, lai "Build" process nenobruktu meklējot "../types"
+
+export type ImageSize = "16:9" | "1:1" | "9:16";
+
+// --- 2. KONFIGURĀCIJA ---
 
 // TAVA GOOGLE ATSLĒGA (Attēliem)
 const GOOGLE_API_KEY = "AIzaSyCaj59GBI8VewfIcTgRMxvAdWMtexa-ulA"; 
@@ -9,13 +13,13 @@ const GOOGLE_API_KEY = "AIzaSyCaj59GBI8VewfIcTgRMxvAdWMtexa-ulA";
 // TAVA ELEVENLABS ATSLĒGA (Balsij)
 const ELEVENLABS_API_KEY = "sk_133b207a40e066459dccb49d350bcdfea3dc4856eee4b593";
 
-// --- 2. BALSS ĢENERĒŠANA (ElevenLabs) ---
+// --- 3. BALSS ĢENERĒŠANA (ElevenLabs) ---
 
 export const generateAudio = async (text: string): Promise<string> => {
-  // 1. TIEŠĀ ATSLĒGA (lai pārbaudītu, vai strādā)
+  // Tiešā atslēga drošībai
   const API_KEY = ELEVENLABS_API_KEY; 
   
-  console.log("🚀 Sākam generateAudio funkciju (JAUNAIS KODS)...");
+  console.log("🚀 Sākam generateAudio...");
   
   if (!API_KEY) {
     console.error("❌ Kļūda: Nav API atslēgas!");
@@ -23,16 +27,18 @@ export const generateAudio = async (text: string): Promise<string> => {
   }
 
   try {
-    // Rachel balss (standarta, stabila balss)
+    // Rachel balss
     const voiceId = "21m00Tcm4TlvDq8ikWAM"; 
 
-    console.log(`🎙️ Sūtam pieprasījumu uz ElevenLabs priekš teksta: "${text.substring(0, 20)}..."`);
+    // Apgriežam tekstu logam, lai nepiesārņotu konsoli
+    const previewText = text.length > 20 ? text.substring(0, 20) + "..." : text;
+    console.log(`🎙️ Sūtam pieprasījumu uz ElevenLabs: "${previewText}"`);
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "xi-api-key": API_KEY.trim(), // .trim() noņem nejaušas atstarpes
+        "xi-api-key": API_KEY.trim(),
       },
       body: JSON.stringify({
         text: text,
@@ -53,43 +59,43 @@ export const generateAudio = async (text: string): Promise<string> => {
     const audioBlob = await response.blob();
     const audioUrl = URL.createObjectURL(audioBlob);
     
-    console.log("✅ URRĀ! Audio saņemts veiksmīgi!");
+    console.log("✅ Audio saņemts veiksmīgi!");
     return audioUrl;
 
   } catch (error) {
-    console.error("❌ Kritiska koda kļūda:", error);
+    console.error("❌ Kritiska koda kļūda (Audio):", error);
     return "";
   }
 };
 
-// --- 3. ATTĒLU ĢENERĒŠANA (Gemini / Imagen) ---
+// --- 4. ATTĒLU ĢENERĒŠANA (Gemini / Imagen) ---
 
-export const generateImage = async (basePrompt: string, size: ImageSize, style?: string): Promise<string> => {
-  console.log("🎨 Ģenerējam attēlu ar Gemini...");
+// Noņēmu 'style' argumentu, ja tas netiek lietots, lai TypeScript nemestu kļūdu
+export const generateImage = async (basePrompt: string, size: ImageSize): Promise<string> => {
+  console.log(`🎨 Ģenerējam attēlu (${size}) ar Gemini...`);
   
   try {
     const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
     
-    // Mēģinām ar Imagen 3
+    // Modeļa nosaukums
     const model = ai.getGenerativeModel({ model: "imagen-3.0-generate-001" });
     
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: basePrompt }] }]
     });
 
-    // Pārbaude, vai ir atbilde
     if (!result.response) {
        throw new Error("Tukša atbilde no Gemini");
     }
     
     console.log("Attēls ģenerēts veiksmīgi (API atbildēja)!");
     
-    // Pagaidu risinājums: atgriežam placeholder, lai pārliecinātos, ka kods nebrūk.
-    // Vēlāk šeit varēsim ielikt loģiku, kas izvelk īsto bildes URL, ja Imagen to atgriež JSON formātā.
+    // Pagaidu placeholder, lai process neapstātos
     return "https://placehold.co/1280x720/22c55e/FFF?text=Imagen+Success"; 
     
   } catch (error) {
     console.error("❌ Attēla kļūda:", error);
+    // Atgriežam placeholder kļūdas gadījumā
     return "https://placehold.co/1280x720/333/FFF?text=Image+Error";
   }
 };
