@@ -2,8 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// Šī ir tā jaunā rindiņa - SIGNALIZĀCIJA
-alert("Index fails ir ielādējies! 🚀"); 
+
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
