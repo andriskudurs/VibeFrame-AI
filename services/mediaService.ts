@@ -52,7 +52,10 @@ function decodeBase64(base64: string): Uint8Array {
 
 // --- IMAGE GENERATION (UPDATED) ---
 export const generateImage = async (basePrompt: string, size: ImageSize, style?: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // IELIEC SAVU GOOGLE (GEMINI) ATSLĒGU ŠEIT:
+  const ai = new GoogleGenAI({ apiKey: "AIzaSyBRbciebifR9Ie3lwQSCulN1ccEZr3gt8s" }); 
+  
+  // Pārējais kods paliek kā ir...
 
   const finalPrompt = style 
     ? `${style} style. ${basePrompt}` 
