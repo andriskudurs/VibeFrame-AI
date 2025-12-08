@@ -16,14 +16,59 @@ const VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
 // -----------------------------------------------------------
 
 // --- 2. BALSS ĢENERĒŠANA (ElevenLabs) ---
-export const generateAudio = async (text: string): Promise<string> => {
-  console.log("🎙️ Ģenerējam balsi ar ElevenLabs...");
+// --- ŠO IEKOPĒ IZDZĒSTĀS "generateAudio" FUNKCIJAS VIETĀ ---
 
-  // Pārbaude, vai lietotājs ielika atslēgu
-  if (ELEVENLABS_API_KEY === "sk_..." || !ELEVENLABS_API_KEY) {
-    console.error("❌ Trūkst ElevenLabs API atslēgas mediaService.ts failā!");
+export const generateAudio = async (text: string): Promise<string> => {
+  // 1. TIEŠĀ ATSLĒGA (lai pārbaudītu, vai strādā)
+  // Pārliecinies, ka iekopēji pilnu atslēgu bez atstarpēm!
+  const API_KEY = "sk_133b207a40e066459dccb49d350bcdfea3dc4856eee4b593"; 
+  
+  console.log("🚀 Sākam generateAudio funkciju (JAUNAIS KODS)...");
+  
+  if (!API_KEY) {
+    console.error("❌ Kļūda: Nav API atslēgas!");
     return "";
   }
+
+  try {
+    // Rachel balss (standarta, stabila balss)
+    const voiceId = "21m00Tcm4TlvDq8ikWAM"; 
+
+    console.log(`🎙️ Sūtam pieprasījumu uz ElevenLabs priekš teksta: "${text.substring(0, 20)}..."`);
+
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": API_KEY.trim(), // .trim() noņem nejaušas atstarpes
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: "eleven_monolingual_v1",
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+        }
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("❌ ElevenLabs API KĻŪDA:", errorData);
+      return "";
+    }
+
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    console.log("✅ URRĀ! Audio saņemts veiksmīgi!");
+    return audioUrl;
+
+  } catch (error) {
+    console.error("❌ Kritiska koda kļūda:", error);
+    return "";
+  }
+};
 
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
 
