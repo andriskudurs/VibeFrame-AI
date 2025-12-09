@@ -15,25 +15,19 @@ export async function getAudioDuration(audioUrl: string): Promise<number> {
 
 // --- 3. BALSS ĢENERĒŠANA (ElevenLabs) ---
 export const generateAudio = async (text: string): Promise<string> => {
-  // NOLASĀM ATSLĒGU TIKAI TAGAD (Fail-Safe)
+  // ATSLĒGU NOLASĀM TIKAI IZSAUKUMA BRĪDĪ (Drošībai)
   const API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || "";
   
   if (!API_KEY || API_KEY.length < 10) {
-    // Ja nav atslēgas, vienkārši atgriežam tukšu, lai neuzkaras
-    console.warn("⚠️ ElevenLabs atslēga nav atrasta, izlaižam balss ģenerēšanu.");
+    console.warn("⚠️ ElevenLabs atslēga nav atrasta.");
     return "";
   }
 
   try {
     const voiceId = "pNInz6obpgDQGcFmaJgB"; // Adam
-    console.log(`🎙️ Sūtam pieprasījumu uz ElevenLabs...`);
-
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "xi-api-key": API_KEY,
-      },
+      headers: { "Content-Type": "application/json", "xi-api-key": API_KEY },
       body: JSON.stringify({
         text: text,
         model_id: "eleven_multilingual_v2", 
@@ -41,76 +35,60 @@ export const generateAudio = async (text: string): Promise<string> => {
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("❌ ELEVENLABS KĻŪDA:", JSON.stringify(errorData, null, 2));
-      return "";
-    }
-
+    if (!response.ok) return "";
     const audioBlob = await response.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
-    console.log("✅ Balss saņemta!");
-    return audioUrl;
-
+    return URL.createObjectURL(audioBlob);
   } catch (error) {
-    console.error("❌ Tīkla kļūda (Audio):", error);
     return "";
   }
 };
 
-// --- 4. ATTĒLU ĢENERĒŠANA (Gemini Imagen - FIX) ---
+// --- 4. ATTĒLU ĢENERĒŠANA (Imagen - AR TAVU PROMPTU) ---
 export const generateImage = async (basePrompt: string, size: ImageSize): Promise<string> => {
-  console.log(`🎨 Sākam attēla ģenerēšanu (${size})...`);
+  console.log(`🎨 Saņemts prompts: "${basePrompt}"`); // Šeit redzēsi savu tekstu konsolē!
 
-  // --- KRITISKAIS LABOJUMS ---
-  // Mēs nolasām atslēgu TIEŠI ŠEIT UN TAGAD, nevis faila sākumā.
-  // Tas garantē, ka .env fails ir ielādēts.
+  // 1. Iegūstam atslēgu (Fail-Safe: nolasām funkcijas iekšienē)
   const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
-
-  // Debug - pārbaudām konsolē (nerādot pašu atslēgu)
-  if (apiKey) {
-      console.log("✅ API Atslēga tika veiksmīgi nolasīta no vides mainīgajiem.");
-  } else {
-      console.error("❌ KĻŪDA: VITE_GOOGLE_API_KEY ir tukšs vai undefined!");
+  if (!apiKey) {
+      console.error("❌ KĻŪDA: Trūkst API atslēgas priekš Imagen!");
       return "https://placehold.co/1280x720/ef4444/FFF?text=API+Key+Missing";
   }
 
   try {
-    // Inicializējam tieši pirms lietošanas
+    // 2. Inicializējam Google AI ar atslēgu
     const ai = new GoogleGenAI({ apiKey: apiKey });
     
-    // Izvēlamies Imagen modeli
+    // 3. Izvēlamies modeli (pārliecinies, ka tavā reģionā Imagen 3 ir aktīvs)
     const model = ai.getGenerativeModel({ model: "imagen-3.0-generate-001" });
 
-    // Pielāgojam promptu
-    let aspectRatioPrompt = "";
-    if (size === "16:9") aspectRatioPrompt = "Wide landscape aspect ratio, cinematic view.";
-    else if (size === "9:16") aspectRatioPrompt = "Tall vertical portrait aspect ratio.";
+    // 4. Pielāgojam promptu izmēram
+    let aspectRatioPrompt = "aspect ratio 16:9";
+    if (size === "9:16") aspectRatioPrompt = "aspect ratio 9:16";
+    
+    // Šeit mēs apvienojam TAVU promptu ar tehniskajiem parametriem
+    const fullPrompt = `${basePrompt}. ${aspectRatioPrompt}, photorealistic, high details.`;
 
-    const fullPrompt = `${basePrompt}. ${aspectRatioPrompt} High quality, detailed.`;
-
-    // Sūtam pieprasījumu
+    // 5. Sūtam uz Google
     const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
-    
-    const generatedText = response.text();
+    const response = result.response;
 
-    if (!generatedText) {
-        throw new Error("Tukša atbilde no Imagen");
+    // 6. Nolasām Base64 bildi (jo Google nedod linku, bet dod faila datus)
+    const candidates = response.candidates;
+    if (candidates && candidates.length > 0) {
+        const parts = candidates[0].content.parts;
+        if (parts && parts.length > 0) {
+            const inlineData = parts[0].inlineData;
+            if (inlineData && inlineData.data) {
+                console.log("✅ Attēls (Base64) ģenerēts!");
+                return `data:${inlineData.mimeType || "image/png"};base64,${inlineData.data}`;
+            }
+        }
     }
     
-    console.log("✅ Attēls ģenerēts veiksmīgi!");
-
-    // Pārbaude
-    if (!generatedText.startsWith("http") && !generatedText.startsWith("data:image")) {
-        console.warn("Imagen neatgrieza tiešu URL:", generatedText);
-         return `https://placehold.co/1280x720/FFA500/FFF?text=Check+Console+For+Image`;
-    }
-
-    return generatedText;
+    throw new Error("Neizdevās nolasīt attēlu.");
 
   } catch (error) {
     console.error("❌ Attēla ģenerēšanas kļūda:", error);
-    return "https://placehold.co/1280x720/ef4444/FFF?text=Generation+Error";
+    return `https://placehold.co/1280x720/333/FFF?text=Imagen+Error`;
   }
 };
