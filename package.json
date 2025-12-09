@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "gcp-build": "vite build", 
     "preview": "vite preview",
     "start": "npx serve -s dist -l 8080"
   },
