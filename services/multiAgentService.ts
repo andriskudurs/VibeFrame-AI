@@ -19,7 +19,11 @@ class BaseAgent {
   };
 
   constructor() {
-    this.ai = new GoogleGenAI({ apiKey: "AIzaSyBRbciebifR9Ie3lwQSCulN1ccEZr3gt8s" }); // <-- Iekopē savu pilno atslēgu šeit
+    // STANDARTIZĀCIJA: Ņemam atslēgu no .env faila
+    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || "";
+    if (!apiKey) console.warn("⚠️ BaseAgent: Trūkst API atslēgas!");
+    
+    this.ai = new GoogleGenAI({ apiKey: apiKey });
   }
 
   protected async callGemini(systemPrompt: string, userContent: string, retryCount = 0): Promise<any> {
@@ -67,7 +71,6 @@ class AnalystAgent extends BaseAgent {
 }
 
 // --- 2. AĢENTS: STRUKTŪRAS ARHITEKTS (ROUTER) ---
-// Tagad šis aģents izlemj "image_branch" katram slaidam atsevišķi
 class StructureAgent extends BaseAgent {
   async createOutline(ctx: AgentContext, themes: string[]): Promise<{ slides: { title: string, purpose: string, image_branch: ImageBranch }[] }> {
     const prompt = `
@@ -128,7 +131,6 @@ class ContentDetailAgent extends BaseAgent {
 }
 
 // --- 5. AĢENTS: VIZUĀLAIS REŽISORS (DUAL BRANCH) ---
-// Šis tagad ir sadalīts divās loģikās iekšēji
 class VisualDirectorAgent extends BaseAgent {
   
   async createPrompt(ctx: AgentContext, visualIdea: string, branch: ImageBranch): Promise<{ visual_prompt: string }> {
