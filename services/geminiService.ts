@@ -2,10 +2,14 @@ import { GoogleGenAI } from "@google/genai";
 import { Project, ImageSize, VisualStyle, ProjectMode, ImageAspectRatio } from "../types";
 import { runMultiAgentPipeline } from "./multiAgentService";
 
-// Vecā translateTexts funkcija paliek nemainīga (fail-safe)
+// Vecā translateTexts funkcija paliek nemainīga (fail-safe), bet ar ENV atslēgu
 export const translateTexts = async (texts: string[], targetLang: string): Promise<string[]> => {
-    // Iekopē savu garo atslēgu pēdiņās
-const ai = new GoogleGenAI({ apiKey: "AIzaSyBRbciebifR9Ie3lwQSCulN1ccEZr3gt8s" });
+    // Ņemam atslēgu no vides mainīgajiem
+    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || "";
+    if (!apiKey) console.error("⚠️ Trūkst VITE_GOOGLE_API_KEY .env failā!");
+
+    const ai = new GoogleGenAI({ apiKey: apiKey });
+    
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
