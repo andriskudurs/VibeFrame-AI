@@ -3,15 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 // --- 1. IEKŠĒJĀS TIPA DEFINĪCIJAS ---
 export type ImageSize = "16:9" | "1:1" | "9:16";
 
-// --- 2. KONFIGURĀCIJA ---
-
-// Google Gemini atslēga (Attēliem)
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "";
-
-// ElevenLabs atslēga (Balsij)
-const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || "";
-
-// --- 3. AUDIO ILGUMA NOTEIKŠANA ---
+// --- 2. AUDIO ILGUMA NOTEIKŠANA ---
 export async function getAudioDuration(audioUrl: string): Promise<number> {
   return new Promise((resolve) => {
     const audio = new Audio();
@@ -21,12 +13,14 @@ export async function getAudioDuration(audioUrl: string): Promise<number> {
   });
 }
 
-// --- 4. BALSS ĢENERĒŠANA (ElevenLabs) ---
+// --- 3. BALSS ĢENERĒŠANA (ElevenLabs) ---
 export const generateAudio = async (text: string): Promise<string> => {
-  const API_KEY = ELEVENLABS_API_KEY.trim(); 
+  // NOLASĀM ATSLĒGU TIKAI TAGAD (Fail-Safe)
+  const API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || "";
   
   if (!API_KEY || API_KEY.length < 10) {
-    console.error("❌ Kļūda: Nav VITE_ELEVENLABS_API_KEY .env failā!");
+    // Ja nav atslēgas, vienkārši atgriežam tukšu, lai neuzkaras
+    console.warn("⚠️ ElevenLabs atslēga nav atrasta, izlaižam balss ģenerēšanu.");
     return "";
   }
 
@@ -64,24 +58,31 @@ export const generateAudio = async (text: string): Promise<string> => {
   }
 };
 
-// --- 5. ATTĒLU ĢENERĒŠANA (Gemini Imagen - IZLABOTS) ---
+// --- 4. ATTĒLU ĢENERĒŠANA (Gemini Imagen - FIX) ---
 export const generateImage = async (basePrompt: string, size: ImageSize): Promise<string> => {
-  console.log(`🎨 Ģenerējam attēlu (${size}) ar Gemini...`);
+  console.log(`🎨 Sākam attēla ģenerēšanu (${size})...`);
 
-  if (!GOOGLE_API_KEY) {
-      console.error("❌ Trūkst VITE_GOOGLE_API_KEY!");
-      return "https://placehold.co/1280x720/ef4444/FFF?text=Missing+API+Key";
+  // --- KRITISKAIS LABOJUMS ---
+  // Mēs nolasām atslēgu TIEŠI ŠEIT UN TAGAD, nevis faila sākumā.
+  // Tas garantē, ka .env fails ir ielādēts.
+  const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+
+  // Debug - pārbaudām konsolē (nerādot pašu atslēgu)
+  if (apiKey) {
+      console.log("✅ API Atslēga tika veiksmīgi nolasīta no vides mainīgajiem.");
+  } else {
+      console.error("❌ KĻŪDA: VITE_GOOGLE_API_KEY ir tukšs vai undefined!");
+      return "https://placehold.co/1280x720/ef4444/FFF?text=API+Key+Missing";
   }
 
   try {
-    // === LABOJUMS ŠEIT: ===
-    // Atslēga obligāti jāpadod objektā { apiKey: ... }, nevis kā pliks teksts
-    const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
+    // Inicializējam tieši pirms lietošanas
+    const ai = new GoogleGenAI({ apiKey: apiKey });
     
     // Izvēlamies Imagen modeli
     const model = ai.getGenerativeModel({ model: "imagen-3.0-generate-001" });
 
-    // Pielāgojam promptu izmēram
+    // Pielāgojam promptu
     let aspectRatioPrompt = "";
     if (size === "16:9") aspectRatioPrompt = "Wide landscape aspect ratio, cinematic view.";
     else if (size === "9:16") aspectRatioPrompt = "Tall vertical portrait aspect ratio.";
@@ -100,16 +101,16 @@ export const generateImage = async (basePrompt: string, size: ImageSize): Promis
     
     console.log("✅ Attēls ģenerēts veiksmīgi!");
 
-    // Drošības pārbaude
+    // Pārbaude
     if (!generatedText.startsWith("http") && !generatedText.startsWith("data:image")) {
-        console.warn("Imagen neatgrieza tiešu URL, skatīt konsoli:", generatedText);
-         return `https://placehold.co/1280x720/FFA500/FFF?text=Imagen+Generated+(Check+Console)`;
+        console.warn("Imagen neatgrieza tiešu URL:", generatedText);
+         return `https://placehold.co/1280x720/FFA500/FFF?text=Check+Console+For+Image`;
     }
 
     return generatedText;
 
   } catch (error) {
     console.error("❌ Attēla ģenerēšanas kļūda:", error);
-    return "https://placehold.co/1280x720/ef4444/FFF?text=Image+Generation+Error";
+    return "https://placehold.co/1280x720/ef4444/FFF?text=Generation+Error";
   }
 };
