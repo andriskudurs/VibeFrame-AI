@@ -5,10 +5,10 @@ export type ImageSize = "16:9" | "1:1" | "9:16";
 
 // --- 2. KONFIGURĀCIJA ---
 
-// Google Gemini atslēga (Attēliem) - no .env
+// Google Gemini atslēga (Attēliem)
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "";
 
-// ElevenLabs atslēga (Balsij) - no .env
+// ElevenLabs atslēga (Balsij)
 const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || "";
 
 // --- 3. AUDIO ILGUMA NOTEIKŠANA ---
@@ -64,7 +64,7 @@ export const generateAudio = async (text: string): Promise<string> => {
   }
 };
 
-// --- 5. ATTĒLU ĢENERĒŠANA (Gemini Imagen) ---
+// --- 5. ATTĒLU ĢENERĒŠANA (Gemini Imagen - IZLABOTS) ---
 export const generateImage = async (basePrompt: string, size: ImageSize): Promise<string> => {
   console.log(`🎨 Ģenerējam attēlu (${size}) ar Gemini...`);
 
@@ -74,8 +74,10 @@ export const generateImage = async (basePrompt: string, size: ImageSize): Promis
   }
 
   try {
-    // Inicializējam Google AI
-    const ai = new GoogleGenAI(GOOGLE_API_KEY);
+    // === LABOJUMS ŠEIT: ===
+    // Atslēga obligāti jāpadod objektā { apiKey: ... }, nevis kā pliks teksts
+    const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
+    
     // Izvēlamies Imagen modeli
     const model = ai.getGenerativeModel({ model: "imagen-3.0-generate-001" });
 
